@@ -1,0 +1,248 @@
+#!/usr/bin/env ruby
+
+require "mspac"
+require "optparse"
+require "string"
+
+class MsPacExit
+    GOOD = 0
+    INVALID_OPTION = 1
+    INVALID_ARGUMENT = 2
+    MISSING_ARGUMENT = 3
+    INVALID_OPERATION = 4
+    MULTIPLE_OPERATIONS = 5
+    EXCEPTION = 6
+end
+
+class Operation
+    LIST_CACHED = 1
+    LIST_INSTALLED = 2
+    LIST_PELLETS = 3
+    LOCK = 4
+    REMOVE = 5
+    SYNC = 6
+    UNLOCK = 7
+end
+
+def parse(args)
+    options = Hash.new
+    options["clean"] = false
+    options["force"] = false
+    options["nosave"] = false
+    options["operation"] = nil
+    options["refresh"] = false
+    options["upgrade"] = false
+
+    parser = OptionParser.new do |opts|
+        opts.banner =
+            "Usage: #{File.basename($0)} <operation> [OPTIONS] " \
+            "[pellets]"
+
+        opts.on("", "OPERATIONS")
+
+        opts.on("-h", "--help", "Display this help message") do
+            puts opts
+            exit
+        end
+
+        opts.on("--list-cached", "List cached pellets") do
+            options["operation"] = Operation::LIST_CACHED
+        end
+
+        opts.on("--list-installed", "List installed pellets") do
+            options["operation"] = Operation::LIST_INSTALLED
+        end
+
+        opts.on("--list-pellets", "List available pellets") do
+            options["operation"] = Operation::LIST_PELLETS
+        end
+
+        opts.on(
+            "-L",
+            "--lock",
+            "Lock a pellet at it's current version"
+        ) do
+            if (options["operation"])
+                puts opts
+                exit MsPacExit::MULTIPLE_OPERATIONS
+            end
+            options["operation"] = Operation::LOCK
+        end
+
+        opts.on("-R", "--remove", "Remove pellets") do
+            if (options["operation"])
+                puts opts
+                exit MsPacExit::MULTIPLE_OPERATIONS
+            end
+            options["operation"] = Operation::REMOVE
+        end
+
+        opts.on("-S", "--sync", "Synchronize pellets") do
+            if (options["operation"])
+                puts opts
+                exit MsPacExit::MULTIPLE_OPERATIONS
+            end
+            options["operation"] = Operation::SYNC
+        end
+
+        opts.on("-U", "--unlock", "Unlock a pellet") do
+            if (options["operation"])
+                puts opts
+                exit MsPacExit::MULTIPLE_OPERATIONS
+            end
+            options["operation"] = Operation::UNLOCK
+        end
+
+        opts.on("", "SYNC OPTIONS")
+
+        opts.on(
+            "-c",
+            "--clean",
+            "Remove pellets that are no longer installed",
+            "from the cache"
+        ) do
+            if (options["operation"] == Operation::SYNC)
+                options["clean"] = true
+            else
+                puts opts
+                exit MsPacExit::INVALID_OPERATION
+            end
+        end
+
+        opts.on(
+            "-f",
+            "--force",
+            "Force a reinstall/recompilation of the pellet"
+        ) do
+            if (options["operation"] == Operation::SYNC)
+                options["force"] = true
+            else
+                puts opts
+                exit MsPacExit::INVALID_OPERATION
+            end
+        end
+
+        opts.on(
+            "-s",
+            "--search=regex",
+            "Search each pellet for names matching the",
+            "provided regex and display them"
+        ) do |regex|
+            if (
+                (options["operation"] == Operation::SYNC) &&
+                !options["upgrade"]
+            )
+                options["regex"] = regex
+            else
+                puts opts
+                exit MsPacExit::INVALID_OPERATION
+            end
+        end
+
+        opts.on("-u", "--sysupgrade", "Upgrade all pellets") do
+            if (
+                (options["operation"] == Operation::SYNC) &&
+                !options.has_key?("regex")
+            )
+                options["upgrade"] = true
+            else
+                puts opts
+                exit MsPacExit::INVALID_OPERATION
+            end
+        end
+
+        opts.on("-y", "--refresh", "Refresh available pellets") do
+            if (options["operation"] == Operation::SYNC)
+                options["refresh"] = true
+            else
+                puts opts
+                exit MsPacExit::INVALID_OPERATION
+            end
+        end
+
+        opts.on("", "REMOVE OPTIONS")
+
+        opts.on(
+            "-n",
+            "--nosave",
+            "Completely remove pellet"
+        ) do
+            if (options["operation"] == Operation::REMOVE)
+                options["nosave"] = true
+            else
+                puts opts
+                exit MsPacExit::INVALID_OPERATION
+            end
+        end
+    end
+
+    begin
+        parser.parse!
+    rescue OptionParser::InvalidOption => e
+        puts e.message
+        puts parser
+        exit MsPacExit::INVALID_OPTION
+    rescue OptionParser::InvalidArgument => e
+        puts e.message
+        puts parser
+        exit MsPacExit::INVALID_ARGUMENT
+    rescue OptionParser::MissingArgument => e
+        puts e.message
+        puts parser
+        exit MsPacExit::MISSING_ARGUMENT
+    end
+
+    options["pellets"] = args
+
+    if (options.has_key?("regex") && !options["pellets"].empty?)
+        puts parser
+        exit MsPacExit::INVALID_OPERATION
+    end
+
+    return options
+end
+
+# Parse CLI args
+options = parse(ARGV)
+
+begin
+    mspac = MsPac.new
+
+    case options["operation"]
+    when Operation::LIST_CACHED
+        puts mspac.cached
+    when Operation::LIST_INSTALLED
+        puts mspac.installed
+    when Operation::LIST_PELLETS
+        puts mspac.pellets
+    when Operation::LOCK
+        mspac.lock(options["pellets"])
+    when Operation::REMOVE
+        mspac.remove(options["pellets"], options["nosave"])
+    when Operation::SYNC
+        mspac.clean if (options["clean"])
+        mspac.refresh if (options["refresh"])
+
+        if (options.has_key?("regex"))
+            mspac.search(options["regex"])
+        elsif (options["upgrade"])
+            mspac.upgrade
+        else
+            if (
+                !options["refresh"] ||
+                (options["pellets"] && !options["pellets"].empty?)
+            )
+                mspac.install(options["pellets"], options["force"])
+            end
+        end
+    when Operation::UNLOCK
+        mspac.unlock(options["pellets"])
+    end
+    exit MsPacExit::GOOD
+rescue MsPac::Error => e
+    puts e.message.red
+    exit MsPacExit::EXCEPTION
+rescue Interrupt => e
+    # ^C
+    puts
+end
