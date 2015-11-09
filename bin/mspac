@@ -228,9 +228,9 @@ begin
         elsif (options["upgrade"])
             mspac.upgrade
         else
-            if (
-                !options["refresh"] ||
-                (options["pellets"] && !options["pellets"].empty?)
+            unless (
+                (options["clean"] || options["refresh"]) &&
+                (options["pellets"].nil? || options["pellets"].empty?)
             )
                 mspac.install(options["pellets"], options["force"])
             end

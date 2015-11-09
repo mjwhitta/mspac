@@ -40,11 +40,11 @@ class MsPac::PackageManager
         when "pacman"
             system("sudo pacman --needed --noconfirm -S #{pkgs}")
         when "perl"
-            system("sudo cpan #{pkgs}")
+            system("umask 022 && sudo cpan #{pkgs}")
         when "python2"
-            system("python2 -m pip install #{pkgs}")
+            system("umask 022 && sudo python2 -m pip install #{pkgs}")
         when "python3"
-            system("python3 -m pip install #{pkgs}")
+            system("umask 022 && sudo python3 -m pip install #{pkgs}")
         when "yum"
             raise Error::UnsupportedPackageManagerError.new("yum")
         when "zipper"
