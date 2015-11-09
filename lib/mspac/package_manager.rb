@@ -14,15 +14,21 @@ class MsPac::PackageManager
         if (ScoobyDoo.where_are_you("apt-get"))
             @pkgmgr = "apt-get"
         elsif (ScoobyDoo.where_are_you("brew"))
-            raise Error::UnsupportedPackageManagerError.new("brew")
+            raise MsPac::Error::UnsupportedPackageManagerError.new(
+                "brew"
+            )
         elsif (ScoobyDoo.where_are_you("pacman"))
             @pkgmgr = "pacman"
         elsif (ScoobyDoo.where_are_you("yum"))
-            raise Error::UnsupportedPackageManagerError.new("yum")
+            raise MsPac::Error::UnsupportedPackageManagerError.new(
+                "yum"
+            )
         elsif (ScoobyDoo.where_are_you("zipper"))
-            raise Error::UnsupportedPackageManagerError.new("zipper")
+            raise MsPac::Error::UnsupportedPackageManagerError.new(
+                "zipper"
+            )
         else
-            raise Error::UnsupportedPackageManagerError.new
+            raise MsPac::Error::UnsupportedPackageManagerError.new
         end
     end
 
@@ -36,7 +42,9 @@ class MsPac::PackageManager
         when "apt-get"
             system("sudo apt-get install -y #{pkgs}")
         when "brew"
-            raise Error::UnsupportedPackageManagerError.new("brew")
+            raise MsPac::Error::UnsupportedPackageManagerError.new(
+                "brew"
+            )
         when "pacman"
             system("sudo pacman --needed --noconfirm -S #{pkgs}")
         when "perl"
@@ -46,11 +54,15 @@ class MsPac::PackageManager
         when "python3"
             system("umask 022 && sudo python3 -m pip install #{pkgs}")
         when "yum"
-            raise Error::UnsupportedPackageManagerError.new("yum")
+            raise MsPac::Error::UnsupportedPackageManagerError.new(
+                "yum"
+            )
         when "zipper"
-            raise Error::UnsupportedPackageManagerError.new("zipper")
+            raise MsPac::Error::UnsupportedPackageManagerError.new(
+                "zipper"
+            )
         else
-            raise Error::UnsupportedPackageManagerError.new
+            raise MsPac::Error::UnsupportedPackageManagerError.new
         end
     end
     private :pkgmgr_install
