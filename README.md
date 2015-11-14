@@ -1,5 +1,7 @@
 # MsPac
 
+## What is this?
+
 MsPac is a package manager written in ruby which tries to mirror
 Arch's pacman. It's meant for installing opensource tools from source.
 It only supports `git` or `hg` repos at this time. I hope to add `bzr`
