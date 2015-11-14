@@ -55,7 +55,7 @@ REMOVE OPTIONS
 
 ## Links
 
-- [Homepage](http://mjwhitta.github.io/mspac)
+- [Homepage](https://mjwhitta.github.io/mspac)
 - [Source](https://gitlab.com/mjwhitta/mspac)
 - [Mirror](https://github.com/mjwhitta/mspac)
 - [RubyGems](https://rubygems.org/gems/mspac)

@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
         Dir["*"]
     end
     s.files = Dir["lib/**/*.rb"]
-    s.homepage = "http://mjwhitta.github.io/mspac"
+    s.homepage = "https://mjwhitta.github.io/mspac"
     s.license = "GPL-3.0"
     s.add_runtime_dependency("scoobydoo", "~> 0.1", ">= 0.1.1")
 end
