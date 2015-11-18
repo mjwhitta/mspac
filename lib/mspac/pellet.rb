@@ -31,7 +31,7 @@ class MsPac::Pellet < Hash
 
     def execute(operation)
         Dir.chdir("#{@@install_dir}/#{name}") do
-            system(self[operation].join("; "))
+            system(["umask 022"].concat(self[operation]).join("; "))
         end if (!self[operation].empty?)
     end
     private :execute
