@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
     s.name = "mspac"
-    s.version = "0.1.5"
+    s.version = "0.1.6"
     s.date = Time.new.strftime("%Y-%m-%d")
     s.summary = "Simple package manager for installing from source"
     s.description =
