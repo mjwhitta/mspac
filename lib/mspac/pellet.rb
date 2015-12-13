@@ -50,6 +50,7 @@ class MsPac::Pellet < Hash
         else
             Dir.chdir(@@cache_dir) do
                 @vcs.clone(self["repo"])
+                @vcs.ignore_file_perms(name)
             end
         end
     end

@@ -10,6 +10,19 @@ class MsPac::VersionControl
         end
     end
 
+    def ignore_file_perms(name)
+        Dir.chdir(name) do
+            case @vcs
+            when "git"
+                system("git config core.filemode false")
+            when "hg"
+                # do nothing
+            else
+                raise Error::UnsupportedVCSError.new(@vcs)
+            end
+        end
+    end
+
     def initialize(vcs)
         case vcs
         when "bzr"

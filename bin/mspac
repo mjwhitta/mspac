@@ -26,12 +26,17 @@ end
 
 def parse(args)
     options = Hash.new
+    options["operation"] = nil
+
+    # Sync options
     options["clean"] = false
     options["force"] = false
-    options["nosave"] = false
-    options["operation"] = nil
     options["refresh"] = false
+    options["regex"] = false
     options["upgrade"] = false
+
+    # Remove options
+    options["nosave"] = false
 
     parser = OptionParser.new do |opts|
         opts.banner =
@@ -101,12 +106,7 @@ def parse(args)
             "Remove pellets that are no longer installed",
             "from the cache"
         ) do
-            if (options["operation"] == Operation::SYNC)
-                options["clean"] = true
-            else
-                puts opts
-                exit MsPacExit::INVALID_OPERATION
-            end
+            options["clean"] = true
         end
 
         opts.on(
@@ -114,65 +114,30 @@ def parse(args)
             "--force",
             "Force a reinstall/recompilation of the pellet"
         ) do
-            if (options["operation"] == Operation::SYNC)
-                options["force"] = true
-            else
-                puts opts
-                exit MsPacExit::INVALID_OPERATION
-            end
+            options["force"] = true
         end
 
         opts.on(
             "-s",
-            "--search=regex",
+            "--search",
             "Search each pellet for names matching the",
             "provided regex and display them"
-        ) do |regex|
-            if (
-                (options["operation"] == Operation::SYNC) &&
-                !options["upgrade"]
-            )
-                options["regex"] = regex
-            else
-                puts opts
-                exit MsPacExit::INVALID_OPERATION
-            end
+        ) do
+            options["regex"] = true
         end
 
         opts.on("-u", "--sysupgrade", "Upgrade all pellets") do
-            if (
-                (options["operation"] == Operation::SYNC) &&
-                !options.has_key?("regex")
-            )
-                options["upgrade"] = true
-            else
-                puts opts
-                exit MsPacExit::INVALID_OPERATION
-            end
+            options["upgrade"] = true
         end
 
         opts.on("-y", "--refresh", "Refresh available pellets") do
-            if (options["operation"] == Operation::SYNC)
-                options["refresh"] = true
-            else
-                puts opts
-                exit MsPacExit::INVALID_OPERATION
-            end
+            options["refresh"] = true
         end
 
         opts.on("", "REMOVE OPTIONS")
 
-        opts.on(
-            "-n",
-            "--nosave",
-            "Completely remove pellet"
-        ) do
-            if (options["operation"] == Operation::REMOVE)
-                options["nosave"] = true
-            else
-                puts opts
-                exit MsPacExit::INVALID_OPERATION
-            end
+        opts.on("-n", "--nosave", "Completely remove pellet") do
+            options["nosave"] = true
         end
     end
 
@@ -192,14 +157,124 @@ def parse(args)
         exit MsPacExit::MISSING_ARGUMENT
     end
 
-    options["pellets"] = args
-
-    if (options.has_key?("regex") && !options["pellets"].empty?)
+    if (!validate(options))
         puts parser
         exit MsPacExit::INVALID_OPERATION
     end
 
+    options["pellets"] = args
+
     return options
+end
+
+def validate(options)
+    case options["operation"]
+    when Operation::LIST_CACHED
+        if (
+            options["clean"] ||
+            options["force"] ||
+            options["nosave"] ||
+            options["refresh"] ||
+            options["regex"] ||
+            options["upgrade"]
+        )
+            return false
+        end
+    when Operation::LIST_INSTALLED
+        if (
+            options["clean"] ||
+            options["force"] ||
+            options["nosave"] ||
+            options["refresh"] ||
+            options["regex"] ||
+            options["upgrade"]
+        )
+            return false
+        end
+    when Operation::LIST_PELLETS
+        if (
+            options["clean"] ||
+            options["force"] ||
+            options["nosave"] ||
+            options["refresh"] ||
+            options["regex"] ||
+            options["upgrade"]
+        )
+            return false
+        end
+    when Operation::LOCK
+        if (
+            options["clean"] ||
+            options["force"] ||
+            options["nosave"] ||
+            options["refresh"] ||
+            options["regex"] ||
+            options["upgrade"]
+        )
+            return false
+        end
+    when Operation::REMOVE
+        if (
+            options["clean"] ||
+            options["force"] ||
+            options["refresh"] ||
+            options["regex"] ||
+            options["upgrade"]
+        )
+            return false
+        end
+    when Operation::SYNC
+        return false if (options["nosave"])
+
+        if (options["clean"])
+            if (
+                options["force"] ||
+                options["regex"] ||
+                options["upgrade"]
+            )
+                return false
+            end
+        elsif (options["force"])
+            if (
+                options["clean"] ||
+                options["regex"] ||
+                options["upgrade"]
+            )
+                return false
+            end
+        elsif (options["regex"])
+            if (
+                options["clean"] ||
+                options["force"] ||
+                options["upgrade"]
+            )
+                return false
+            end
+        elsif (options["upgrade"])
+            if (
+                options["clean"] ||
+                options["force"] ||
+                options["regex"]
+            )
+                return false
+            end
+        end
+    when Operation::UNLOCK
+        if (
+            options["clean"] ||
+            options["force"] ||
+            options["nosave"] ||
+            options["refresh"] ||
+            options["regex"] ||
+            options["upgrade"]
+        )
+            return false
+        end
+    else
+        return false
+    end
+
+    return true
 end
 
 # Parse CLI args
@@ -220,16 +295,17 @@ begin
     when Operation::REMOVE
         mspac.remove(options["pellets"], options["nosave"])
     when Operation::SYNC
-        mspac.clean if (options["clean"])
         mspac.refresh if (options["refresh"])
 
-        if (options.has_key?("regex"))
-            mspac.search(options["regex"])
+        if (options["clean"])
+            mspac.clean
+        elsif (options["regex"])
+            mspac.search(options["pellets"].join(" "))
         elsif (options["upgrade"])
             mspac.upgrade
         else
             unless (
-                (options["clean"] || options["refresh"]) &&
+                options["refresh"] &&
                 (options["pellets"].nil? || options["pellets"].empty?)
             )
                 mspac.install(options["pellets"], options["force"])
