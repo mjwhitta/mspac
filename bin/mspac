@@ -39,9 +39,10 @@ def parse(args)
     options["nosave"] = false
 
     parser = OptionParser.new do |opts|
-        opts.banner =
-            "Usage: #{File.basename($0)} <operation> [OPTIONS] " \
+        opts.banner = [
+            "Usage: #{File.basename($0)} <operation> [OPTIONS]",
             "[pellets]"
+        ].join(" ")
 
         opts.on("", "OPERATIONS")
 
