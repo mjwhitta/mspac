@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
+require "colorize"
 require "mspac"
 require "optparse"
-require "string"
 
 class MsPacExit
     GOOD = 0

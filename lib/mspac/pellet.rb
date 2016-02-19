@@ -1,5 +1,5 @@
+require "colorize"
 require "fileutils"
-require "string"
 
 class MsPac::Pellet < Hash
     @@cache_dir = Pathname("~/.mspac/cache").expand_path

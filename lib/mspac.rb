@@ -1,8 +1,8 @@
+require "colorize"
 require "fileutils"
 require "json"
 require "pathname"
 require "scoobydoo"
-require "string"
 
 class MsPac
     def cached
