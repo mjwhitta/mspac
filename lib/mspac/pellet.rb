@@ -5,11 +5,50 @@ class MsPac::Pellet < Hash
     @@cache_dir = Pathname("~/.mspac/cache").expand_path
     @@install_dir = Pathname("~/.mspac/installed").expand_path
 
-    def initialize(json)
+    def colorize_cached(cached)
+        if (!@colorize)
+            return "[cached]" if (cached)
+        else
+            return "[cached]".light_blue if (cached)
+        end
+        return ""
+    end
+    private :colorize_cached
+
+    def colorize_error(error)
+        return error if (!@colorize)
+        return error.light_red
+    end
+    private :colorize_error
+
+    def colorize_installed(installed)
+        if (!@colorize)
+            return "[installed]" if (installed)
+        else
+            return "[installed]".light_green if (installed)
+        end
+        return ""
+    end
+    private :colorize_installed
+
+    def colorize_name(name = @name)
+        return name if (!@colorize)
+        return name.light_white
+    end
+    private :colorize_name
+
+    def colorize_status(status)
+        return status if (!@colorize)
+        return status.light_white
+    end
+    private :colorize_status
+
+    def initialize(json, colorize = false)
         json.keys.each do |key|
             self[key] = json[key]
         end
 
+        @colorize = colorize
         @pm = MsPac::PackageManager.new
         @vcs = MsPac::VersionControl.new(self["vcs"])
     end
@@ -20,7 +59,7 @@ class MsPac::Pellet < Hash
 
     def compile
         return if (self["compile"].empty?)
-        puts "Compiling #{name}...".white
+        puts colorize_status("Compiling #{name}...")
         execute("compile")
     end
     private :compile
@@ -42,7 +81,7 @@ class MsPac::Pellet < Hash
 
         get_deps
 
-        puts "Fetching #{name}...".white
+        puts colorize_status("Fetching #{name}...")
         if (Pathname.new("#{@@cache_dir}/#{name}").expand_path.exist?)
             Dir.chdir("#{@@cache_dir}/#{name}") do
                 @vcs.update
@@ -56,7 +95,7 @@ class MsPac::Pellet < Hash
     end
 
     def get_deps
-        puts "Installing dependencies...".white
+        puts colorize_status("Installing dependencies...")
         @pm.install([self["vcs"]].concat(self["deps"][@pm.pkgmgr]))
         @pm.install(self["deps"]["perl"], "perl")
         @pm.install(self["deps"]["python2"], "python2")
@@ -72,7 +111,7 @@ class MsPac::Pellet < Hash
         link if (!installed?)
         compile
 
-        puts "Installing #{name}...".white
+        puts colorize_status("Installing #{name}...")
         execute("install")
     end
 
@@ -85,7 +124,7 @@ class MsPac::Pellet < Hash
             raise MsPac::Error::PelletNotInstalledError.new(name)
         end
 
-        puts "Linking #{name}...".white
+        puts colorize_status("Linking #{name}...")
         FileUtils.ln_sf(
             "#{@@cache_dir}/#{name}",
             "#{@@install_dir}/#{name}"
@@ -97,7 +136,7 @@ class MsPac::Pellet < Hash
             raise MsPac::Error::PelletNotInstalledError.new(name)
         end
 
-        puts "Locking #{name}...".white
+        puts colorize_status("Locking #{name}...")
         FileUtils.touch("#{@@install_dir}/#{name}/.mspac_lock")
     end
 
@@ -110,7 +149,7 @@ class MsPac::Pellet < Hash
             raise MsPac::Error::PelletNotInstalledError.new(name)
         end
 
-        puts "Purging #{name}...".white
+        puts colorize_status("Purging #{name}...")
         FileUtils.rm_rf("#{@@cache_dir}/#{name}")
     end
 
@@ -119,7 +158,7 @@ class MsPac::Pellet < Hash
             raise MsPac::Error::PelletNotInstalledError.new(name)
         end
 
-        puts "Removing #{name}...".white
+        puts colorize_status("Removing #{name}...")
         execute("remove")
         unlink
         purge if (nosave)
@@ -129,12 +168,24 @@ class MsPac::Pellet < Hash
         return self["repo"]
     end
 
+    def to_s
+        header = [
+            colorize_name(name),
+            colorize_installed(installed?) || colorize_cached(cached?)
+        ].join(" ")
+        return [
+            header,
+            "    #{repo}",
+            "    #{desc}"
+        ].join("\n")
+    end
+
     def unlink
         if (!installed?)
             raise MsPac::Error::PelletNotInstalledError.new(name)
         end
 
-        puts "Unlinking #{name}...".white
+        puts colorize_status("Unlinking #{name}...")
         FileUtils.rm_f("#{@@install_dir}/#{name}")
     end
 
@@ -143,7 +194,7 @@ class MsPac::Pellet < Hash
             raise MsPac::Error::PelletNotInstalledError.new(name)
         end
 
-        puts "Unlocking #{name}...".white
+        puts colorize_status("Unlocking #{name}...")
         FileUtils.rm_f("#{@@install_dir}/#{name}/.mspac_lock")
     end
 
@@ -154,11 +205,11 @@ class MsPac::Pellet < Hash
 
         Dir.chdir("#{@@install_dir}/#{name}") do
             if (Pathname.new(".mspac_lock").expand_path.exist?)
-                puts "Locked: #{name}".red
+                puts colorize_error("Locked: #{name}")
                 return
             end
 
-            puts "Updating #{name}...".white
+            puts colorize_status("Updating #{name}...")
             tip = @vcs.revision
             @vcs.update
             new_tip = @vcs.revision

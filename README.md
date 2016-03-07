@@ -28,29 +28,34 @@ $ mspac -Sy
 ## Usage
 
 ```
+$ mspac -h
 Usage: mspac <operation> [OPTIONS] [pellets]
 
 OPERATIONS
     -h, --help            Display this help message
-        --list-cached     List cached pellets
-        --list-installed  List installed pellets
-        --list-pellets    List available pellets
     -L, --lock            Lock a pellet at it's current version
     -R, --remove          Remove pellets
     -S, --sync            Synchronize pellets
     -U, --unlock          Unlock a pellet
 
-SYNC OPTIONS
+SYNC_OPTIONS
     -c, --clean           Remove pellets that are no longer installed
                           from the cache
-    -f, --force           Force a reinstall of the pellet
-    -s, --search=regex    Search each pellet for names matching the
+    -f, --force           Force a reinstall/recompilation of the pellet
+    -s, --search          Search each pellet for names matching the
                           provided regex and display them
     -u, --sysupgrade      Upgrade all pellets
     -y, --refresh         Refresh available pellets
 
-REMOVE OPTIONS
+REMOVE_OPTIONS
     -n, --nosave          Completely remove pellet
+
+MISC_OPTIONS
+        --list-cached     List cached pellets
+        --list-installed  List installed pellets
+        --list-pellets    List available pellets
+        --nocolor         Disable colorized output
+    -v, --verbose         Show backtrace when error occurs
 ```
 
 ## Links

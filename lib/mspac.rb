@@ -18,11 +18,23 @@ class MsPac
         # FIXME will miss pellets that get deleted by refresh
     end
 
+    def colorize_error(error)
+        return error if (!@colorize)
+        return error.light_red
+    end
+    private :colorize_error
+
+    def colorize_status(status)
+        return status if (!@colorize)
+        return status.light_white
+    end
+    private :colorize_status
+
     def ensure_pellets_repo
         @pellets_dir = Pathname.new("~/.mspac/pellets").expand_path
         return if (@pellets_dir && @pellets_dir.exist?)
 
-        puts "Installing MsPac dependencies...".white
+        puts colorize_status("Installing MsPac dependencies...")
         @pm.install(["git"]) if (ScoobyDoo.where_are_you("git").nil?)
         Dir.chdir(@mspac_dir) do
             @vcs.clone("https://gitlab.com/mjwhitta/pellets.git")
@@ -35,7 +47,8 @@ class MsPac
     end
     private :ensure_pellets_repo
 
-    def initialize
+    def initialize(colorize = false)
+        @colorize = colorize
         FileUtils.mkdir_p(Pathname.new("~/.mspac").expand_path)
         @mspac_dir = Pathname.new("~/.mspac").expand_path
         @pm = PackageManager.new
@@ -78,13 +91,16 @@ class MsPac
         @pellets = Hash.new
         Dir["#{@pellets_dir}/*.pellet"].each do |pellet|
             begin
-                p = Pellet.new(JSON.parse(File.read(pellet)))
+                p = Pellet.new(
+                    JSON.parse(File.read(pellet)),
+                    @colorize
+                )
                 @pellets[p.name] = p
             rescue JSON::ParserError => e
-                puts "#{pellet} is not valid JSON!".red
-                puts e.message.red
+                puts colorize_error("#{pellet} is not valid JSON!")
+                puts e.message.white.on_red
             rescue Exception => e
-                puts e.message.red
+                puts e.message.white.on_red
             end
         end
     end
@@ -109,7 +125,7 @@ class MsPac
     end
 
     def refresh
-        puts "Refreshing pellets...".white
+        puts colorize_status("Refreshing pellets...")
         Dir.chdir(@pellets_dir) do
             @vcs.update
         end
@@ -134,18 +150,7 @@ class MsPac
             pellet = @pellets[name]
             name_match = pellet.name.match(/#{regex}/)
             desc_match = pellet.desc.match(/#{regex}/)
-            if (name_match || desc_match)
-                print "#{pellet.name}".white
-                if (pellet.installed?)
-                    puts " [installed]".green
-                elsif (pellet.cached?)
-                    puts " [cached]".blue
-                else
-                    puts
-                end
-                puts "    #{pellet.repo}"
-                puts "    #{pellet.desc}"
-            end
+            puts pellet.to_s if (name_match || desc_match)
         end
     end
 
