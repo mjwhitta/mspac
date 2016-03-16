@@ -6,7 +6,7 @@ class MsPac::Pellet < Hash
     @@install_dir = Pathname("~/.mspac/installed").expand_path
 
     def colorize_cached(cached)
-        if (!@colorize)
+        if (!MsPac.colorize?)
             return "[cached]" if (cached)
         else
             return "[cached]".light_blue if (cached)
@@ -16,13 +16,13 @@ class MsPac::Pellet < Hash
     private :colorize_cached
 
     def colorize_error(error)
-        return error if (!@colorize)
+        return error if (!MsPac.colorize?)
         return error.light_red
     end
     private :colorize_error
 
     def colorize_installed(installed)
-        if (!@colorize)
+        if (!MsPac.colorize?)
             return "[installed]" if (installed)
         else
             return "[installed]".light_green if (installed)
@@ -32,23 +32,22 @@ class MsPac::Pellet < Hash
     private :colorize_installed
 
     def colorize_name(name = @name)
-        return name if (!@colorize)
+        return name if (!MsPac.colorize?)
         return name.light_white
     end
     private :colorize_name
 
     def colorize_status(status)
-        return status if (!@colorize)
+        return status if (!MsPac.colorize?)
         return status.light_white
     end
     private :colorize_status
 
-    def initialize(json, colorize = false)
+    def initialize(json)
         json.keys.each do |key|
             self[key] = json[key]
         end
 
-        @colorize = colorize
         @pm = MsPac::PackageManager.new
         @vcs = MsPac::VersionControl.new(self["vcs"])
     end

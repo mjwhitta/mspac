@@ -18,14 +18,19 @@ class MsPac
         # FIXME will miss pellets that get deleted by refresh
     end
 
+    def self.colorize?
+        @@colorize ||= false
+        return @@colorize
+    end
+
     def colorize_error(error)
-        return error if (!@colorize)
+        return error if (!@@colorize)
         return error.light_red
     end
     private :colorize_error
 
     def colorize_status(status)
-        return status if (!@colorize)
+        return status if (!@@colorize)
         return status.light_white
     end
     private :colorize_status
@@ -48,7 +53,7 @@ class MsPac
     private :ensure_pellets_repo
 
     def initialize(colorize = false)
-        @colorize = colorize
+        @@colorize = colorize
         FileUtils.mkdir_p(Pathname.new("~/.mspac").expand_path)
         @mspac_dir = Pathname.new("~/.mspac").expand_path
         @pm = PackageManager.new
@@ -91,10 +96,7 @@ class MsPac
         @pellets = Hash.new
         Dir["#{@pellets_dir}/*.pellet"].each do |pellet|
             begin
-                p = Pellet.new(
-                    JSON.parse(File.read(pellet)),
-                    @colorize
-                )
+                p = Pellet.new(JSON.parse(File.read(pellet)))
                 @pellets[p.name] = p
             rescue JSON::ParserError => e
                 puts colorize_error("#{pellet} is not valid JSON!")
