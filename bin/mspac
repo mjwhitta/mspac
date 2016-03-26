@@ -12,8 +12,9 @@ class MsPacExit
     MISSING_ARGUMENT = 3
     EXTRA_ARGUMENTS = 4
     EXCEPTION = 5
-    INVALID_OPERATION = 6
-    MULTIPLE_OPERATIONS = 7
+    AMBIGUOUS_ARGUMENT = 6
+    INVALID_OPERATION = 7
+    MULTIPLE_OPERATIONS = 8
 end
 
 class Operation
@@ -185,6 +186,10 @@ def parse(args)
         puts e.message
         puts parser
         exit MsPacExit::MISSING_ARGUMENT
+    rescue OptionParser::AmbiguousOption => e
+        puts e.message
+        puts parser
+        exit MsPacExit::AMBIGUOUS_ARGUMENT
     end
 
     if (!validate(options))
