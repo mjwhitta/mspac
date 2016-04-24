@@ -1,4 +1,4 @@
-require "colorize"
+require "hilighter"
 require "fileutils"
 require "json"
 require "pathname"
@@ -18,28 +18,11 @@ class MsPac
         # FIXME will miss pellets that get deleted by refresh
     end
 
-    def self.colorize?
-        @@colorize ||= false
-        return @@colorize
-    end
-
-    def colorize_error(error)
-        return error if (!@@colorize)
-        return error.light_red
-    end
-    private :colorize_error
-
-    def colorize_status(status)
-        return status if (!@@colorize)
-        return status.light_white
-    end
-    private :colorize_status
-
     def ensure_pellets_repo
         @pellets_dir = Pathname.new("~/.mspac/pellets").expand_path
         return if (@pellets_dir && @pellets_dir.exist?)
 
-        puts colorize_status("Installing MsPac dependencies...")
+        puts hilight_status("Installing MsPac dependencies...")
         @pm.install(["git"]) if (ScoobyDoo.where_are_you("git").nil?)
         Dir.chdir(@mspac_dir) do
             @vcs.clone("https://gitlab.com/mjwhitta/pellets.git")
@@ -52,8 +35,25 @@ class MsPac
     end
     private :ensure_pellets_repo
 
-    def initialize(colorize = false)
-        @@colorize = colorize
+    def self.hilight?
+        @@hilight ||= false
+        return @@hilight
+    end
+
+    def hilight_error(error)
+        return error if (!@@hilight)
+        return error.light_red
+    end
+    private :hilight_error
+
+    def hilight_status(status)
+        return status if (!@@hilight)
+        return status.light_white
+    end
+    private :hilight_status
+
+    def initialize(hilight = false)
+        @@hilight = hilight
         FileUtils.mkdir_p(Pathname.new("~/.mspac").expand_path)
         @mspac_dir = Pathname.new("~/.mspac").expand_path
         @pm = PackageManager.new
@@ -99,7 +99,7 @@ class MsPac
                 p = Pellet.new(JSON.parse(File.read(pellet)))
                 @pellets[p.name] = p
             rescue JSON::ParserError => e
-                puts colorize_error("#{pellet} is not valid JSON!")
+                puts hilight_error("#{pellet} is not valid JSON!")
                 puts e.message.white.on_red
             rescue Exception => e
                 puts e.message.white.on_red
@@ -127,7 +127,7 @@ class MsPac
     end
 
     def refresh
-        puts colorize_status("Refreshing pellets...")
+        puts hilight_status("Refreshing pellets...")
         Dir.chdir(@pellets_dir) do
             @vcs.update
         end
