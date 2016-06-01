@@ -5,47 +5,51 @@ class MsPac::VersionControl
         case @vcs
         when "git", "hg"
             system("#{@vcs} clone #{repo}")
+        when "powerpellet"
+            # do nothing
         else
-            raise Error::UnsupportedVCSError.new(@vcs)
+            raise MsPac::Error::UnsupportedVCS.new(@vcs)
         end
     end
 
     def ignore_file_perms(name)
-        Dir.chdir(name) do
-            case @vcs
-            when "git"
+        case @vcs
+        when "git"
+            Dir.chdir(name) do
                 system("git config core.filemode false")
-            when "hg"
-                # do nothing
-            else
-                raise Error::UnsupportedVCSError.new(@vcs)
             end
+        when "hg", "powerpellet"
+            # do nothing
+        else
+            raise MsPac::Error::UnsupportedVCS.new(@vcs)
         end
     end
 
     def initialize(vcs)
         case vcs
         when "bzr"
-            raise Error::UnsupportedVCSError.new(vcs)
-        when "git"
-            @vcs = vcs
-        when "hg"
+            raise MsPac::Error::UnsupportedVCS.new(vcs)
+        when "git", "hg", "powerpellet"
             @vcs = vcs
         when "svn"
-            raise Error::UnsupportedVCSError.new(vcs)
+            raise MsPac::Error::UnsupportedVCS.new(vcs)
         else
-            raise Error::UnsupportedVCSError.new
+            raise MsPac::Error::UnsupportedVCS.new
         end
     end
 
     def revision
         case @vcs
         when "git"
-            %x(git log --oneline | head -n 1 | awk '{print $1}')
+            return %x(
+                git log --oneline | head -n 1 | awk '{print $1}'
+            )
         when "hg"
-            %(hg tip --template "{node}")
+            return %(hg tip --template "{node}")
+        when "powerpellet"
+            return "powerpellet"
         else
-            raise Error::UnsupportedVCSError.new(@vcs)
+            raise MsPac::Error::UnsupportedVCS.new(@vcs)
         end
     end
 
@@ -55,8 +59,10 @@ class MsPac::VersionControl
             system("git reset && git pull")
         when "hg"
             system("hg pull && hg update")
+        when "powerpellet"
+            # do nothing
         else
-            raise Error::UnsupportedVCSError.new(@vcs)
+            raise MsPac::Error::UnsupportedVCS.new(@vcs)
         end
     end
 end

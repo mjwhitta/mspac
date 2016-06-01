@@ -21,9 +21,19 @@ class MsPac::Pellet < Hash
     end
 
     def execute(operation)
-        Dir.chdir("#{@@install_dir}/#{name}") do
-            system(["umask 022"].concat(self[operation]).join("; "))
-        end if (!self[operation].empty?)
+        if (self["vcs"] != "powerpellet")
+            Dir.chdir("#{@@install_dir}/#{name}") do
+                system(
+                    ["umask 022"].concat(self[operation]).join("; ")
+                )
+            end if (!self[operation].empty?)
+        else
+            if (!self[operation].empty?)
+                system(
+                    ["umask 022"].concat(self[operation]).join("; ")
+                )
+            end
+        end
     end
     private :execute
 
@@ -47,8 +57,12 @@ class MsPac::Pellet < Hash
     end
 
     def get_deps
-        puts hilight_status("Installing dependencies...")
-        @pm.install([self["vcs"]].concat(self["deps"][@pm.pkgmgr]))
+        puts hilight_status("Installing dependencies for #{name}...")
+        deps = Array.new
+        deps.push(self["vcs"]) if (self["vcs"] != "powerpellet")
+        deps.push(self["deps"][@pm.pkgmgr])
+        @pm.install(deps)
+        @pm.install(self["deps"]["mspac"], "mspac")
         @pm.install(self["deps"]["perl"], "perl")
         @pm.install(self["deps"]["python2"], "python2")
         @pm.install(self["deps"]["python3"], "python3")
@@ -81,7 +95,7 @@ class MsPac::Pellet < Hash
     end
     private :hilight_installed
 
-    def hilight_name(name = @name)
+    def hilight_name(name)
         return name if (!MsPac.hilight?)
         return name.light_white
     end
@@ -93,18 +107,18 @@ class MsPac::Pellet < Hash
     end
     private :hilight_status
 
-    def initialize(json)
+    def initialize(json, pm)
         json.keys.each do |key|
             self[key] = json[key]
         end
 
-        @pm = MsPac::PackageManager.new
+        @pm = pm
         @vcs = MsPac::VersionControl.new(self["vcs"])
     end
 
     def install
-        if (!cached?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+        if (!cached? && (self["vcs"] != "powerpellet"))
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
 
         link if (!installed?)
@@ -119,9 +133,11 @@ class MsPac::Pellet < Hash
     end
 
     def link
-        if (!cached?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+        if (!cached? && (self["vcs"] != "powerpellet"))
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
+
+        return if (self["vcs"] == "powerpellet")
 
         puts hilight_status("Linking #{name}...")
         FileUtils.ln_sf(
@@ -132,7 +148,7 @@ class MsPac::Pellet < Hash
 
     def lock
         if (!installed?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
 
         puts hilight_status("Locking #{name}...")
@@ -144,9 +160,11 @@ class MsPac::Pellet < Hash
     end
 
     def purge
-        if (!cached?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+        if (!cached? && (self["vcs"] != "powerpellet"))
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
+
+        return if (self["vcs"] == "powerpellet")
 
         puts hilight_status("Purging #{name}...")
         FileUtils.rm_rf("#{@@cache_dir}/#{name}")
@@ -154,7 +172,7 @@ class MsPac::Pellet < Hash
 
     def remove(nosave = false)
         if (!installed?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
 
         puts hilight_status("Removing #{name}...")
@@ -181,7 +199,7 @@ class MsPac::Pellet < Hash
 
     def unlink
         if (!installed?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
 
         puts hilight_status("Unlinking #{name}...")
@@ -190,7 +208,7 @@ class MsPac::Pellet < Hash
 
     def unlock
         if (!installed?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
 
         puts hilight_status("Unlocking #{name}...")
@@ -199,8 +217,10 @@ class MsPac::Pellet < Hash
 
     def update(force = false)
         if (!installed?)
-            raise MsPac::Error::PelletNotInstalledError.new(name)
+            raise MsPac::Error::PelletNotInstalled.new(name)
         end
+
+        return if (self["vcs"] == "powerpellet")
 
         Dir.chdir("#{@@install_dir}/#{name}") do
             if (Pathname.new(".mspac_lock").expand_path.exist?)

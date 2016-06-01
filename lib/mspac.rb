@@ -6,8 +6,8 @@ require "scoobydoo"
 
 class MsPac
     def cached
-        return @pellets.keys.sort.delete_if do |name|
-            !@pellets[name].cached?
+        return @pellets.keys.sort.keep_if do |name|
+            @pellets[name].cached?
         end
     end
 
@@ -30,7 +30,7 @@ class MsPac
 
         @pellets_dir = Pathname.new("~/.mspac/pellets").expand_path
         if (@pellets_dir.nil? || !@pellets_dir.exist?)
-            raise Error::PelletRepoError.new
+            raise Error::PelletRepo.new
         end
     end
     private :ensure_pellets_repo
@@ -56,14 +56,14 @@ class MsPac
         @@hilight = hilight
         FileUtils.mkdir_p(Pathname.new("~/.mspac").expand_path)
         @mspac_dir = Pathname.new("~/.mspac").expand_path
-        @pm = PackageManager.new
+        @pm = PackageManager.new(self)
         @vcs = VersionControl.new("git")
         load_pellets
     end
 
     def install(pellets, force = false)
         if (pellets.nil? || pellets.empty?)
-            raise Error::MissingPelletError.new
+            raise Error::MissingPellet.new
         end
 
         pellets.each do |name|
@@ -79,7 +79,7 @@ class MsPac
                     pellet.install
                 end
             else
-                raise Error::MissingPelletError.new(name)
+                raise Error::MissingPellet.new(name)
             end
         end
     end
@@ -96,7 +96,7 @@ class MsPac
         @pellets = Hash.new
         Dir["#{@pellets_dir}/*.pellet"].each do |pellet|
             begin
-                p = Pellet.new(JSON.parse(File.read(pellet)))
+                p = Pellet.new(JSON.parse(File.read(pellet)), @pm)
                 @pellets[p.name] = p
             rescue JSON::ParserError => e
                 puts hilight_error("#{pellet} is not valid JSON!")
@@ -110,14 +110,14 @@ class MsPac
 
     def lock(pellets)
         if (pellets.nil? || pellets.empty?)
-            raise Error::MissingPelletError.new
+            raise Error::MissingPellet.new
         end
 
         pellets.each do |name|
             if (@pellets.has_key?(name))
                 @pellets[name].lock
             else
-                raise Error::MissingPelletError.new(name)
+                raise Error::MissingPellet.new(name)
             end
         end
     end
@@ -135,14 +135,14 @@ class MsPac
 
     def remove(pellets, nosave)
         if (pellets.nil? || pellets.empty?)
-            raise Error::MissingPelletError.new
+            raise Error::MissingPellet.new
         end
 
         pellets.each do |name|
             if (@pellets.has_key?(name))
                 @pellets[name].remove(nosave)
             else
-                raise Error::MissingPelletError.new(name)
+                raise Error::MissingPellet.new(name)
             end
         end
     end
@@ -158,14 +158,14 @@ class MsPac
 
     def unlock(pellets)
         if (pellets.nil? || pellets.empty?)
-            raise Error::MissingPelletError.new
+            raise Error::MissingPellet.new
         end
 
         pellets.each do |name|
             if (@pellets.has_key?(name))
                 @pellets[name].unlock
             else
-                raise Error::MissingPelletError.new(name)
+                raise Error::MissingPellet.new(name)
             end
         end
     end
