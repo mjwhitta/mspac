@@ -5,7 +5,7 @@ class MsPac::PackageManager
     attr_reader :pkgmgr
 
     def alt_install(packages, pkgmgr = @pkgmgr)
-        return if (packages.nil? || packages.empty?)
+        return if (packages.nil?)
         packages.each do |pkg|
             pkgmgr_install(pkg, pkgmgr)
         end
@@ -36,11 +36,12 @@ class MsPac::PackageManager
     end
 
     def install(packages, pkgmgr = @pkgmgr)
-        return if (packages.nil? || packages.empty?)
+        return if (packages.nil?)
         pkgmgr_install(packages.join(" "), pkgmgr)
     end
 
     def pkgmgr_install(pkgs, pkgmgr = @pkgmgr)
+        return if (pkgs.nil? || pkgs.empty?)
         case pkgmgr
         when "apt-get"
             system("sudo apt-get install -y #{pkgs}")
