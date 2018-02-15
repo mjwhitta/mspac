@@ -20,7 +20,7 @@ because I use this myself, but I'm not perfect. Use at your own risk.
 
 ## How to install
 
-```bash
+```
 $ gem install mspac
 $ mspac -Sy
 ```
@@ -60,7 +60,6 @@ MISC_OPTIONS
 
 ## Links
 
-- [Homepage](https://mjwhitta.github.io/mspac)
 - [Source](https://gitlab.com/mjwhitta/mspac)
 - [Mirror](https://github.com/mjwhitta/mspac)
 - [RubyGems](https://rubygems.org/gems/mspac)
