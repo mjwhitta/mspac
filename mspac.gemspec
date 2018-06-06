@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
     s.name = "mspac"
-    s.version = "0.3.4"
+    s.version = "0.3.5"
     s.date = Time.new.strftime("%Y-%m-%d")
     s.summary = "Simple package manager for installing from source"
     s.description =
@@ -17,9 +17,9 @@ Gem::Specification.new do |s|
         Dir["*"]
     end
     s.files = Dir["lib/**/*.rb"]
-    s.homepage = "https://mjwhitta.github.io/mspac"
+    s.homepage = "https://gitlab.com/mjwhitta/mspac"
     s.license = "GPL-3.0"
-    s.add_development_dependency("rake", "~> 12.3", ">= 12.3.0")
-    s.add_runtime_dependency("hilighter", "~> 1.1", ">= 1.1.1")
-    s.add_runtime_dependency("scoobydoo", "~> 0.1", ">= 0.1.5")
+    s.add_development_dependency("rake", "~> 12.3", ">= 12.3.1")
+    s.add_runtime_dependency("hilighter", "~> 1.1", ">= 1.2.3")
+    s.add_runtime_dependency("scoobydoo", "~> 0.1", ">= 0.1.6")
 end

@@ -61,7 +61,6 @@ MISC_OPTIONS
 ## Links
 
 - [Source](https://gitlab.com/mjwhitta/mspac)
-- [Mirror](https://github.com/mjwhitta/mspac)
 - [RubyGems](https://rubygems.org/gems/mspac)
 
 ## TODO
