@@ -1,5 +1,7 @@
 # MsPac
 
+<a href="https://www.buymeacoffee.com/mjwhitta">🍪 Buy me a cookie</a>
+
 ## What is this?
 
 MsPac is a package manager written in ruby which tries to mirror
