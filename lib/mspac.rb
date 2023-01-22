@@ -25,7 +25,7 @@ class MsPac
         puts hilight_status("Installing MsPac dependencies...")
         @pm.install(["git"]) if (ScoobyDoo.where_are_you("git").nil?)
         Dir.chdir(@mspac_dir) do
-            @vcs.clone("https://gitlab.com/mjwhitta/pellets.git")
+            @vcs.clone("https://github.com/mjwhitta/pellets.git")
         end
 
         @pellets_dir = Pathname.new("~/.mspac/pellets").expand_path

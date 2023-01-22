@@ -13,7 +13,7 @@ installing dependencies at this time. I hope to add support for
 
 MsPac installs tools by reading pellet files. The pellets are
 contained in a separate repo located
-[here](https://gitlab.com/mjwhitta/pellets). It is not safe to assume
+[here](https://github.com/mjwhitta/pellets). It is not safe to assume
 that the pellets are stable. Any changes to build instructions, of the
 tools themselves, could break MsPac. While I personally wouldn't put
 malicous code into a pellet file, it's also not safe to assume I
@@ -62,7 +62,7 @@ MISC_OPTIONS
 
 ## Links
 
-- [Source](https://gitlab.com/mjwhitta/mspac)
+- [Source](https://github.com/mjwhitta/mspac)
 - [RubyGems](https://rubygems.org/gems/mspac)
 
 ## TODO
